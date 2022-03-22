@@ -18,6 +18,7 @@ namespace LockFree
         void ThreadA()
         {
             A = true;
+            Thread.MemoryBarrier();
             if(!B)
                 A_Won = true;
         }
@@ -25,6 +26,7 @@ namespace LockFree
         void ThreadB()
         {
             B = true;
+            Thread.MemoryBarrier();
             if(!A)
                 B_Won = true;
         }

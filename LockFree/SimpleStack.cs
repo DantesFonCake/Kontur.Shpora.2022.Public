@@ -1,4 +1,6 @@
-﻿namespace LockFree
+﻿using System.Threading;
+
+namespace LockFree
 {
     public class SimpleStack<T> : IStack<T>
     {
@@ -7,31 +9,29 @@
 
         public void Push(T obj)
         {
+            Node<T> oldHead;
             var newHead = new Node<T> { Value = obj };
 
-            lock (syncObj)
+            do
             {
-                if (head == null)
-                    head = newHead;
-                else
-                {
-                    newHead.Next = head;
-                    head = newHead;
-                }
-            }
+                oldHead = head;
+                newHead.Next = oldHead;
+            } while (Interlocked.CompareExchange(ref head, newHead, oldHead) != oldHead);
         }
 
         public T Pop()
         {
-            T value;
-
-            lock (syncObj)
+            Node<T> oldHead;
+            Node<T> newHead;
+            do
             {
-                value = head.Value;
-                head = head.Next;
-            }
+                oldHead = head;
+                newHead = oldHead.Next;
 
-            return value;
+
+            } while (Interlocked.CompareExchange(ref head, newHead, oldHead) != oldHead);
+
+            return oldHead.Value;
         }
     }
 }

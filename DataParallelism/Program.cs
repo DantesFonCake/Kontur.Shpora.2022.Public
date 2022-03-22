@@ -15,7 +15,7 @@ namespace DataParallelism
 	{
 		static void Main()
 		{
-			PlinqDemo();
+			//PlinqDemo();
 			//CompareDifferentApproaches();
 
 			//PrimesAndPartitioner();
@@ -30,7 +30,7 @@ namespace DataParallelism
 			//ParallelForImageDemo();
 			//ParallelForBreakDemo();
 
-			//PartitionerBitmap.BitmapDemo();
+			PartitionerBitmap.BitmapDemo();
 		}
 
 		private static void PlinqDemo()
@@ -264,5 +264,37 @@ namespace DataParallelism
 			if(num % 100_000 == 0)
 				Console.WriteLine($"[{Thread.CurrentThread.ManagedThreadId}]\t{num}");
 		}
+	}
+
+	internal class PartitionerBitmap
+	{
+		public static void BitmapDemo()
+		{
+			int pixelSize = 20;
+			int width = 128;
+			int height = 128;
+			var local = new ThreadLocal<int>(() => Guid.NewGuid().GetHashCode() | unchecked((int) 0xff000000));
+
+			var matrix = new int[height, width];
+			var bmp = new Bitmap(width*pixelSize,height*pixelSize);
+			using var bitmap = new DirectBitmap(bmp);
+
+			Enumerable.Range(0, width * height)
+			          .AsParallel()
+			          .ForAll(i => DrawPixel(bitmap, i % width, i / width, pixelSize, pixelSize,local));
+			bmp.Save("a.png");
+		}
+
+		public static void DrawPixel(DirectBitmap bitmap, int x, int y, int height, int width, ThreadLocal<int> color)
+		{
+			for (int i = 0; i < width; i++)
+			{
+				for (int j = 0; j < height; j++)
+				{
+					bitmap.FastSetPixel((x+i),(y+j),Color.FromArgb(color.Value));
+				}
+			}
+		}
+			
 	}
 }
