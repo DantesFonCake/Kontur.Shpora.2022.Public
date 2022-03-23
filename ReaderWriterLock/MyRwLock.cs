@@ -7,11 +7,11 @@ public class MyRwLock : IRwLock
 {
     private readonly object readerLock = new();
     private readonly object writeLock = new();
-    private int readers;
+    private volatile int readers;
 
     public void ReadLocked(Action action)
     {
-        lock (readerLock)
+        lock (writeLock)
         {
             Interlocked.Increment(ref readers);
         }
