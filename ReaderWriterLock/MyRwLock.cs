@@ -7,7 +7,7 @@ public class MyRwLock : IRwLock
 {
     private readonly object readerLock = new();
     private readonly object writeLock = new();
-    private volatile int readers;
+    private int readers;
 
     public void ReadLocked(Action action)
     {
@@ -25,7 +25,8 @@ public class MyRwLock : IRwLock
             lock (readerLock)
             {
                 Interlocked.Decrement(ref readers);
-                Monitor.PulseAll(readerLock);
+                if (readers == 0)
+                    Monitor.Pulse(readerLock);
             }
         }
     }
